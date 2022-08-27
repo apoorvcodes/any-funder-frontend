@@ -1,4 +1,4 @@
 export interface UserSettings {
-    name: string;
-    description: string;
+  name: string;
+  description: string;
 }

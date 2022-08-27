@@ -1,19 +1,19 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import axios from "axios";
+import axios from 'axios';
 
-import type { UserSettings } from "../types";
+import type { UserSettings } from '../types';
 
 export const useIPFSRetrieve = (hash: string) => {
-    const [data, setData] = useState<UserSettings>();
+  const [data, setData] = useState<UserSettings>();
 
-    const retrieve = async () => {
-        const { data } = await axios.get(`https://ipfs.io/ipfs/${hash}`);
+  const retrieve = async () => {
+    const { data } = await axios.get(`https://ipfs.io/ipfs/${hash}`);
 
-        setData(data);
-    }
+    setData(data);
+  };
 
-    retrieve();
+  retrieve();
 
-    return data;
-}
+  return data;
+};

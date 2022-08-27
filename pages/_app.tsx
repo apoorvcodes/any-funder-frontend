@@ -26,7 +26,7 @@ const chainIdToRpcUrl = baseSupportedChains.reduce((acc, chain) => {
 }, {} as Record<number, string>);
 
 const { chains, provider, webSocketProvider } = configureChains(
-  baseSupportedChains,
+  [],
   [publicProvider()]
 );
 

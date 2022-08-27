@@ -5,7 +5,7 @@ const Home: NextPage = () => {
   return (
     <div>
       <Navbar />
-      <Hero/>
+      <Hero />
     </div>
   );
 };

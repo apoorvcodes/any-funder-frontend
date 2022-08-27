@@ -7,7 +7,15 @@ import {
   ReactFragment,
   ReactPortal
 } from 'react';
-import { useConnect, useDisconnect, useAccount, useBalance } from 'wagmi';
+import {
+  useConnect,
+  useDisconnect,
+  useAccount,
+  useBalance,
+  useContractRead
+} from 'wagmi';
+
+import { REGISTRY_ABI, REGISTRY_URL } from '../config';
 
 export const WalletConnectComponent = () => {
   const { connect, connectors, isLoading, pendingConnector } = useConnect();
@@ -16,13 +24,18 @@ export const WalletConnectComponent = () => {
   return (
     <div suppressHydrationWarning>
       {isConnected
-        ? Disconnect({ disconnect, address })
-        : Connected({ connect, connectors, isLoading, pendingConnector })}
+        ? Connected({ disconnect, address })
+        : NotConnected({ connect, connectors, isLoading, pendingConnector })}
     </div>
   );
 };
 
-function Connected({ connect, connectors, isLoading, pendingConnector }: any) {
+function NotConnected({
+  connect,
+  connectors,
+  isLoading,
+  pendingConnector
+}: any) {
   return (
     <div suppressHydrationWarning className="btn btn-primary">
       <div className="dropdown">
@@ -65,7 +78,8 @@ function Connected({ connect, connectors, isLoading, pendingConnector }: any) {
   );
 }
 
-function Disconnect({ disconnect, address }: any) {
+function Connected({ disconnect, address }: any) {
+
   return (
     <div suppressHydrationWarning className="dropdown">
       <label tabIndex={0} className="btn btn-primary m-1">
