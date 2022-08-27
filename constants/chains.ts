@@ -2,7 +2,7 @@ import { chain as wagmiChains, Chain as WagmiChain } from 'wagmi';
 
 import { etherscanBlockExplorers } from './blockExplorers';
 
-const chains: Record<string, WagmiChain> = {
+export const chains: Record<string, WagmiChain> = {
   // Ethereum
   mainnet: wagmiChains.mainnet,
   rinkeby: wagmiChains.rinkeby,

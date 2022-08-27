@@ -3,7 +3,7 @@ import { Hero } from '../Components/Hero';
 import { Navbar } from '../Components/Navbar';
 const Home: NextPage = () => {
   return (
-    <div>
+    <div suppressHydrationWarning>
       <Navbar />
       <Hero />
     </div>

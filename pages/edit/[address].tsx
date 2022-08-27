@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { usePrepareContractWriter, useContractWriter } from '../../hooks/useContractWriter';
 import {
   useAccount,
   useContractRead,
@@ -7,12 +8,12 @@ import {
   useContractWrite
 } from 'wagmi';
 
-import { REGISTRY_URL, REGISTRY_ABI } from '../config';
-import { usePrevious } from '../hooks/usePrevious';
-import { useIPFSUpload } from '../hooks/useIPFSUpload';
+import { REGISTRY_URL, REGISTRY_ABI } from '../../config';
+import { usePrevious } from '../../hooks/usePrevious';
+import { useIPFSUpload } from '../../hooks/useIPFSUpload';
 
 // MATIC, WMATIC, USDT, USDC, DAI
-const SettingsPage = () => {
+const EditPage = () => {
   const router = useRouter();
 
   const [username, setUsername] = useState<string>();
@@ -43,17 +44,18 @@ const SettingsPage = () => {
   });
 
   // Write hooks (Settings)
-  const { config: settingsConfig, error } = usePrepareContractWrite({
+  const { config: settingsConfig } = usePrepareContractWrite({
     addressOrName: REGISTRY_URL,
     contractInterface: REGISTRY_ABI,
     functionName: 'setSettings',
-    args: [address, ipfsURI],
-    enabled: ipfsURI !== null
+    args: ipfsURI
   });
+  console.log(settingsConfig);
 
-  console.log('error', error);
-
-  const { write: settingsWrite, data } = useContractWrite(settingsConfig);
+  const { write: settingsWrite } = useContractWrite(settingsConfig);
+  const callback = usePrepareContractWrite(settingsConfig);
+  console.log(callback);
+  // Delay the prepare hook call until ipfs uri defined
  
   // Write hooks (Contract linking)
 
@@ -90,11 +92,10 @@ const SettingsPage = () => {
       <div className="py-12 px-12 bg-white rounded-2xl shadow-xl z-20">
         <div>
           <h1 className="text-3xl text-black font-bold text-center mb-4 cursor-pointer">
-            Create An Account
+            Edit Profile
           </h1>
           <p className="w-80 text-center text-sm mb-8 font-semibold text-gray-700 tracking-wide cursor-pointer">
-            Create an account to enjoy all the services without any ads for
-            free!
+            Edit your current profile and re-deploy your contract
           </p>
         </div>
         <div className="space-y-4">
@@ -161,18 +162,16 @@ const SettingsPage = () => {
         <div className="text-center mt-6">
           <button
             onClick={() => {
+             
               console.log(username, bio);
               console.log(REGISTRY_URL);
-              
               uploadToIPFS();
               console.log(ipfsURI);
-              console.log(data);
-              
               settingsWrite?.();
             }}
             className="py-3 w-64 text-xl text-white bg-purple-400 rounded-2xl"
           >
-            Create page settings
+            Update page settings
           </button>
         </div>
       </div>
@@ -182,4 +181,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default EditPage;

@@ -5,7 +5,7 @@ import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
 
-import { baseSupportedChains } from '../constants/chains';
+import { baseSupportedChains, chains as constChains } from '../constants/chains';
 
 import '../styles/globals.css';
 
@@ -20,13 +20,10 @@ const clientMetadata = {
   isDarkMode: true
 };
 
-const chainIdToRpcUrl = baseSupportedChains.reduce((acc, chain) => {
-  acc[chain.id] = chain.rpcUrls[0];
-  return acc;
-}, {} as Record<number, string>);
+const chainIdToRpcUrl = [constChains.mumbai.rpcUrls.default, constChains.polygon.rpcUrls.default];
 
 const { chains, provider, webSocketProvider } = configureChains(
-  baseSupportedChains,
+  [constChains.mumbai, constChains.polygon],
   [publicProvider()]
 );
 

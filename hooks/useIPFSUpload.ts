@@ -10,7 +10,7 @@ export const useIPFSUpload = () => {
       name: settings.name,
       description: settings.description,
       // Unnecessary as it's not used
-      image: new Blob([logo], { type: 'image/svg+xml' }),
+      image: new Blob([logo], { type: 'image/svg+xml' })
     });
   };
 };
