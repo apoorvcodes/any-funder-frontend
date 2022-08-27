@@ -48,6 +48,10 @@ const SettingsPage = () => {
 
   // Write hooks (Contract linking)
 
+  // Write + Read hooks for fund withdraw (if present, validate before performing transaction)
+
+  // Reads hook for displaying the payment stats inside a infinite scroll modal (if contract exists)
+
   // Contract deployment -- Would be better with react query (imo)?
   const deploy = useDeployContract([
     '', // Payment receiver, can be address zero

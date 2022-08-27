@@ -16,6 +16,8 @@ const UserSettingsPage = () => {
     args: address
   });
 
+  // Write hook for payment
+
   const retrievedData = useIPFSRetrieve(settingsData as unknown as string);
 
   // Handle no retrieved data (ie, No user registered). Redirect to setup or display a modal?
