@@ -79,7 +79,6 @@ function NotConnected({
 }
 
 function Connected({ disconnect, address }: any) {
-
   return (
     <div suppressHydrationWarning className="dropdown">
       <label tabIndex={0} className="btn btn-primary m-1">

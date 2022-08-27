@@ -10,5 +10,5 @@ export const useIPFSUpload = () => {
       // Unnecessary as it's not used
       image: new Blob([''])
     });
-  }
+  };
 };
