@@ -1,10 +1,11 @@
 import type { NextPage } from 'next';
-import { WalletConnectComponent } from '../Components/WalletConnect';
+import { Hero } from '../Components/Hero';
+import { Navbar } from '../Components/Navbar';
 const Home: NextPage = () => {
   return (
     <div>
-      Funding app
-      <WalletConnectComponent />
+      <Navbar />
+      <Hero/>
     </div>
   );
 };
