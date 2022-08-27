@@ -1,17 +1,31 @@
-import Router from 'next/router';
-import { useState } from 'react';
-import { useAccount, useContractRead } from 'wagmi';
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+
+import {
+  useAccount,
+  useContractRead,
+  usePrepareContractWrite,
+  useContractWrite
+} from 'wagmi';
 
 import { REGISTRY_URL, REGISTRY_ABI } from '../config';
+import { usePrevious } from '../hooks/usePrevious';
+import { useIPFSUpload } from '../hooks/useIPFSUpload';
 
 // MATIC, WMATIC, USDT, USDC, DAI
 const SettingsPage = () => {
+  const router = useRouter();
+
   const [username, setUsername] = useState<string>();
   const [bio, setBio] = useState<string>();
 
-  const [token, seToken] = useState<string>();
+  const [token, setToken] = useState<string>();
+  const [receive, setReceive] = useState<string>();
 
-  const [recieve, setRecieve] = useState<string>();
+  const [ipfsURI, setIPFSURI] = useState<string>();
+
+  const prevUsername = usePrevious(username);
+  const prevBio = usePrevious(bio);
 
   const { address, isConnected } = useAccount();
 
@@ -29,21 +43,45 @@ const SettingsPage = () => {
     args: address
   });
 
-  // Write hooks
+  // Write hooks (Settings)
+  const { config: settingsConfig } = usePrepareContractWrite({
+    addressOrName: REGISTRY_URL,
+    contractInterface: REGISTRY_ABI,
+    functionName: 'setSettings',
+    args: ipfsURI
+  });
+  console.log(settingsConfig);
 
-  //   if (!isConnected) {
-  //     Router.push('/');
-  //   }
+  const { write: settingsWrite } = useContractWrite(settingsConfig);
+
+  // Write hooks (Contract linking)
+
+  useEffect(() => {
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [isConnected]);
 
   //   if (!contractData) {
   //     // Deploy contract with the specified setttings, and dispkay "no cointract yet"
   //     // Add to registry
   //   }
 
-  //   if (!settingsData) {
-  //     // Get inout for settings
-  //     // Add to registry
-  //   }
+  const uploadToIPFS = async () => {
+    const uploader = useIPFSUpload();
+    const { ipnft } = await uploader({
+      name: username || '',
+      description: bio || ''
+    });
+
+    setIPFSURI(ipnft);
+  };
+
+  if (!settingsData) {
+    // uploadToIPFS();
+    // settingsWrite?.();
+  }
+
   return (
     <div className="min-h-screen bg-black flex justify-center items-center">
       <div className="absolute w-60 h-60 rounded-xl bg-purple-700 -top-5 -left-16 z-0 transform rotate-45 hidden md:block"></div>
@@ -74,8 +112,8 @@ const SettingsPage = () => {
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
           />
           <input
-            value={recieve}
-            onChange={e => setRecieve(e.target.value)}
+            value={receive}
+            onChange={e => setReceive(e.target.value)}
             type="text"
             placeholder="Address"
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
@@ -91,7 +129,7 @@ const SettingsPage = () => {
               <li>
                 <a
                   onClick={() => {
-                    seToken('Matic');
+                    setToken('Matic');
                   }}
                 >
                   Matic
@@ -100,7 +138,7 @@ const SettingsPage = () => {
               <li>
                 <a
                   onClick={() => {
-                    seToken('USDC');
+                    setToken('USDC');
                   }}
                 >
                   USDC
@@ -108,7 +146,7 @@ const SettingsPage = () => {
               </li>
               <li
                 onClick={() => {
-                  seToken('Matic');
+                  setToken('Matic');
                 }}
               >
                 <a>Matic</a>
@@ -123,10 +161,14 @@ const SettingsPage = () => {
           <button
             onClick={() => {
               console.log(username, bio);
+              console.log(REGISTRY_URL)
+              uploadToIPFS();
+              console.log(ipfsURI);
+              settingsWrite?.();
             }}
             className="py-3 w-64 text-xl text-white bg-purple-400 rounded-2xl"
           >
-            Create Account
+            Create page settings
           </button>
         </div>
       </div>
