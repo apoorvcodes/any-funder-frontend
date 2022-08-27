@@ -7,24 +7,17 @@ import {
   useContractWrite
 } from 'wagmi';
 
-import { REGISTRY_URL, REGISTRY_ABI } from '../config';
+import { REGISTRY_URL, REGISTRY_ABI, ZERO_ADDRESS, WMATIC_ADDRESS, SWAP_ROUTER_ADDRESS } from '../config';
 import { usePrevious } from '../hooks/usePrevious';
 import { useIPFSUpload } from '../hooks/useIPFSUpload';
+import { useIPFSRetrieve } from '../hooks/useIPFSRetrieve';
+import { useDeployContract } from '../hooks/useDeployContract';
 
 // MATIC, WMATIC, USDT, USDC, DAI
 const SettingsPage = () => {
   const router = useRouter();
 
-  const [username, setUsername] = useState<string>();
-  const [bio, setBio] = useState<string>();
-
-  const [token, setToken] = useState<string>();
-  const [receive, setReceive] = useState<string>();
-
   const [ipfsURI, setIPFSURI] = useState<string>();
-
-  const prevUsername = usePrevious(username);
-  const prevBio = usePrevious(bio);
 
   const { address, isConnected } = useAccount();
 
@@ -43,7 +36,7 @@ const SettingsPage = () => {
   });
 
   // Write hooks (Settings)
-  const { config: settingsConfig, error } = usePrepareContractWrite({
+  const { config: settingsConfig } = usePrepareContractWrite({
     addressOrName: REGISTRY_URL,
     contractInterface: REGISTRY_ABI,
     functionName: 'setSettings',
@@ -51,11 +44,42 @@ const SettingsPage = () => {
     enabled: ipfsURI !== null
   });
 
-  console.log('error', error);
-
   const { write: settingsWrite, data } = useContractWrite(settingsConfig);
- 
+
   // Write hooks (Contract linking)
+
+  // Contract deployment -- Would be better with react query (imo)?
+  const deploy = useDeployContract([
+    '', // Payment receiver, can be address zero
+    '', // Currency to receive payment in
+    WMATIC_ADDRESS,
+    SWAP_ROUTER_ADDRESS
+  ]);
+
+  // Other hooks
+  const retrievedData = useIPFSRetrieve(settingsData as unknown as string);
+
+  // BUG: The first is undefined, hence undefined. We get the data in few attempts. Fix it?
+  const [username, setUsername] = useState<string | undefined>(
+    retrievedData?.name
+  );
+  const [bio, setBio] = useState<string | undefined>(
+    retrievedData?.description
+  );
+
+  const [token, setToken] = useState<string>();
+  const [receiverAddress, setReceiverAddress] = useState<string>();
+
+  const prevUsername = usePrevious(username);
+  const prevBio = usePrevious(bio);
+
+  // Attribute decisions
+  const settingsModifyType =
+    !username || !bio || !settingsData ? 'create' : 'update';
+  const contractModifyType =
+    !contractData || (contractData as unknown as string) == ZERO_ADDRESS
+      ? 'create'
+      : 'update';
 
   useEffect(() => {
     if (!isConnected) {
@@ -63,25 +87,15 @@ const SettingsPage = () => {
     }
   }, [isConnected]);
 
-  //   if (!contractData) {
-  //     // Deploy contract with the specified setttings, and dispkay "no cointract yet"
-  //     // Add to registry
-  //   }
-
   const uploadToIPFS = async () => {
     const uploader = useIPFSUpload();
-    const { ipnft } = await uploader({
+    const { url } = await uploader({
       name: username || '',
       description: bio || ''
     });
 
-    setIPFSURI(ipnft);
+    setIPFSURI(url);
   };
-
-  if (!settingsData) {
-    // uploadToIPFS();
-    // settingsWrite?.();
-  }
 
   return (
     <div className="min-h-screen bg-black flex justify-center items-center">
@@ -90,12 +104,8 @@ const SettingsPage = () => {
       <div className="py-12 px-12 bg-white rounded-2xl shadow-xl z-20">
         <div>
           <h1 className="text-3xl text-black font-bold text-center mb-4 cursor-pointer">
-            Create An Account
+            Account profile settings
           </h1>
-          <p className="w-80 text-center text-sm mb-8 font-semibold text-gray-700 tracking-wide cursor-pointer">
-            Create an account to enjoy all the services without any ads for
-            free!
-          </p>
         </div>
         <div className="space-y-4">
           <input
@@ -113,10 +123,10 @@ const SettingsPage = () => {
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
           />
           <input
-            value={receive}
-            onChange={e => setReceive(e.target.value)}
+            value={receiverAddress}
+            onChange={e => setReceiverAddress(e.target.value)}
             type="text"
-            placeholder="Address"
+            placeholder="Receiver Address"
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
           />
           <div className="dropdown dropdown-end">
@@ -163,16 +173,16 @@ const SettingsPage = () => {
             onClick={() => {
               console.log(username, bio);
               console.log(REGISTRY_URL);
-              
+
               uploadToIPFS();
               console.log(ipfsURI);
               console.log(data);
-              
+
               settingsWrite?.();
             }}
             className="py-3 w-64 text-xl text-white bg-purple-400 rounded-2xl"
           >
-            Create page settings
+            {settingsModifyType} settings
           </button>
         </div>
       </div>

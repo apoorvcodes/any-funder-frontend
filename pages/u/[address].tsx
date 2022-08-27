@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useContractRead } from 'wagmi';
 
 import { REGISTRY_ABI, REGISTRY_URL } from '../../config';
+import { useIPFSRetrieve } from '../../hooks/useIPFSRetrieve';
 
 const UserSettingsPage = () => {
   const router = useRouter();
@@ -15,7 +16,12 @@ const UserSettingsPage = () => {
     args: address
   });
 
-  console.log(settingsData);
+  const retrievedData = useIPFSRetrieve(settingsData as unknown as string);
+
+  // Handle no retrieved data (ie, No user registered). Redirect to setup or display a modal?
+  if (!retrievedData) {
+    // Do something as intended
+  }
 
   return (
     <div className="bg-black flex justify-center items-center min-h-screen">
@@ -34,26 +40,20 @@ const UserSettingsPage = () => {
           </div>
           <div className="text-center mt-2">
             <h3 className="text-2xl text-slate-700 font-bold leading-normal mb-1">
-              Mike Thompson
+              {retrievedData?.name}
             </h3>
-            <div className="text-xs mt-0 mb-2 text-slate-400 font-bold uppercase">
-              <i className="fas fa-map-marker-alt mr-2 text-slate-400 opacity-75"></i>
-              Paris, France
-            </div>
           </div>
           <div className="mt-6 py-6 border-t border-slate-200 text-center">
             <div className="flex flex-wrap justify-center">
               <div className="w-full px-4">
                 <p className="font-light leading-relaxed text-slate-600 mb-4">
-                  An artist of considerable range, Mike is the name taken by
-                  Melbourne-raised, Brooklyn-based Nick Murphy writes, performs
-                  and records all of his own music, giving it a warm.
+                  {retrievedData?.name}
                 </p>
                 <a
                   href="javascript:;"
                   className="btn btn-primary font-normal text-white hover:text-slate-400"
                 >
-                  Sponsor {address}
+                  Sponsor!
                 </a>
               </div>
             </div>

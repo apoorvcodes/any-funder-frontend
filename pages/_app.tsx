@@ -1,11 +1,15 @@
 import { Toaster } from 'react-hot-toast';
 import { WagmiConfig, createClient, configureChains } from 'wagmi';
+import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public';
 import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
 
-import { baseSupportedChains, chains as constChains } from '../constants/chains';
+import {
+  chains as constChains
+} from '../constants/chains';
+import { ALCHEMY_API_KEY } from '../config';
 
 import '../styles/globals.css';
 
@@ -20,11 +24,14 @@ const clientMetadata = {
   isDarkMode: true
 };
 
-const chainIdToRpcUrl = [constChains.mumbai.rpcUrls.default, constChains.polygon.rpcUrls.default];
+const chainIdToRpcUrl = [
+  constChains.mumbai.rpcUrls.default,
+  constChains.polygon.rpcUrls.default
+];
 
 const { chains, provider, webSocketProvider } = configureChains(
   [constChains.mumbai, constChains.polygon],
-  [publicProvider()]
+  [alchemyProvider({ apiKey: ALCHEMY_API_KEY }), publicProvider()]
 );
 
 const client = createClient({

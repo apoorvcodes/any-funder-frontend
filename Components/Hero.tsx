@@ -8,9 +8,9 @@ export function Hero() {
             Decentralized, Censorship-free
           </div>
           <div className="text-5xl  text-white font-bold">
-            Crowd <span className="text-primary">Funding</span>
+            <span className="text-secondary">Crowd Funding</span> app
           </div>
-          <div className="text-xl text-purple-400 font-bold pt-2 font-sans">
+          <div className="text-xl text-purple-400 font-bold pt-4 font-sans">
             making payments and sponsorships easy over the blockchain.
           </div>
           <div className="pt-8 font-sans"></div>
