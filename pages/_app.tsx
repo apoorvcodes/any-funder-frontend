@@ -1,19 +1,21 @@
 import { Toaster } from 'react-hot-toast';
 import { WagmiConfig, createClient, configureChains } from 'wagmi';
-import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { publicProvider } from 'wagmi/providers/public';
 import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import {
-  chains as constChains
-} from '../constants/chains';
+import { chains as constChains } from '../constants/chains';
 import { ALCHEMY_API_KEY } from '../config';
 
 import '../styles/globals.css';
 
 import type { AppProps } from 'next/app';
+
+// Setup react-query client
+const queryClient = new QueryClient();
 
 // Setup the Client metadata
 const clientMetadata = {
@@ -70,9 +72,11 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <div className="min-h-screen min-w-full bg-black">
       <Toaster position="top-right" reverseOrder={false} />
-      <WagmiConfig client={client}>
-        <Component {...pageProps} />
-      </WagmiConfig>
+      <QueryClientProvider client={queryClient}>
+        <WagmiConfig client={client}>
+          <Component {...pageProps} />
+        </WagmiConfig>
+      </QueryClientProvider>
     </div>
   );
 }

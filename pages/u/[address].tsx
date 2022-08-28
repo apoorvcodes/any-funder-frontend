@@ -1,13 +1,22 @@
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
-import { useContractRead } from 'wagmi';
+import { useContractRead, usePrepareContractWrite, useContractWrite } from 'wagmi';
+import { toast } from 'react-hot-toast';
 
 import { REGISTRY_ABI, REGISTRY_URL } from '../../config';
 import { useIPFSRetrieve } from '../../hooks/useIPFSRetrieve';
+import { MATIC } from '../../constants/currency';
+
+import type { CallOverrides } from 'ethers';
 
 const UserSettingsPage = () => {
   const router = useRouter();
   const { address } = router.query;
+
+  const [paymentCurrency, setPaymentCurrency] = useState<string>();
+  const [paymentAmount, setPaymentAmount] = useState<number>();
+  const [message, setMessage] = useState<string>('');
 
   const { data: settingsData } = useContractRead({
     addressOrName: REGISTRY_URL,
@@ -17,8 +26,28 @@ const UserSettingsPage = () => {
   });
 
   // Write hook for payment
+  
+  // msg.value override if the currency is native
+  const overrides: CallOverrides = {};
 
-  const retrievedData = useIPFSRetrieve(settingsData as unknown as string);
+  if (paymentCurrency === MATIC.address) {
+    overrides.value = paymentAmount;
+  }
+
+  const { config: paymentConfig } = usePrepareContractWrite({
+    addressOrName: REGISTRY_URL,
+    contractInterface: REGISTRY_ABI,
+    functionName: 'setSettings',
+    args: [paymentCurrency, paymentAmount, message],
+    enabled: paymentCurrency !== null && paymentAmount !== null && message !== null,
+    overrides: overrides
+  });
+
+  const { write: paymentWrite } = useContractWrite(paymentConfig);
+
+  const { data: retrievedData } = useIPFSRetrieve(
+    settingsData as unknown as string
+  );
 
   // Handle no retrieved data (ie, No user registered). Redirect to setup or display a modal?
   if (!retrievedData) {
@@ -27,7 +56,7 @@ const UserSettingsPage = () => {
 
   return (
     <div className="bg-black flex justify-center items-center min-h-screen">
-      <div className="relative max-w-md mx-auto md:max-w-2xl mt-6 min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-xl mt-16">
+      <div className="relative max-w-md mx-auto md:max-w-2xl mt-6 min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-xl">
         <div className="px-6">
           <div className="flex flex-wrap justify-center">
             <div className="w-full flex justify-center">

@@ -1,24 +1,16 @@
 import { useState } from 'react';
 
 import axios from 'axios';
-
-import type { UserSettings } from '../types';
+import { useQuery } from '@tanstack/react-query';
 
 export const useIPFSRetrieve = (hash: string) => {
-  const [data, setData] = useState<UserSettings>();
-
-  // Pre-mature return.
-  if (!hash) return;
-
-  const retrieve = async () => {
+  const query = useQuery(['ipfs-retrieve'], async () => {
     const { data } = await axios.get(
       hash.replace('ipfs://', 'https://infura-ipfs.io/ipfs/')
     );
 
-    setData(data);
-  };
+    return data;
+  });
 
-  retrieve();
-
-  return data;
+  return query;
 };

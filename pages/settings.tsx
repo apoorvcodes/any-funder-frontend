@@ -6,18 +6,32 @@ import {
   usePrepareContractWrite,
   useContractWrite
 } from 'wagmi';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 
-import { REGISTRY_URL, REGISTRY_ABI, ZERO_ADDRESS, WMATIC_ADDRESS, SWAP_ROUTER_ADDRESS } from '../config';
+import {
+  REGISTRY_URL,
+  REGISTRY_ABI,
+  ZERO_ADDRESS,
+  WMATIC_ADDRESS,
+  SWAP_ROUTER_ADDRESS,
+  FUND_ABI
+} from '../config';
 import { usePrevious } from '../hooks/usePrevious';
 import { useIPFSUpload } from '../hooks/useIPFSUpload';
 import { useIPFSRetrieve } from '../hooks/useIPFSRetrieve';
 import { useDeployContract } from '../hooks/useDeployContract';
+import { allCurrencies } from '../constants/currency';
 
-// MATIC, WMATIC, USDT, USDC, DAI
 const SettingsPage = () => {
   const router = useRouter();
 
   const [ipfsURI, setIPFSURI] = useState<string>();
+
+  const [token, setToken] = useState<string>();
+  const [tokenName, setTokenName] = useState<string>();
+  const [receiverAddress, setReceiverAddress] = useState<string>();
+  const [deployedContractAddress, setDeployedContractAddress] = useState<string>();
 
   const { address, isConnected } = useAccount();
 
@@ -44,35 +58,50 @@ const SettingsPage = () => {
     enabled: ipfsURI !== null
   });
 
-  const { write: settingsWrite, data } = useContractWrite(settingsConfig);
+  const { write: settingsWrite } = useContractWrite(settingsConfig);
 
   // Write hooks (Contract linking)
+  const { config: contractConfig } = usePrepareContractWrite({
+    addressOrName: REGISTRY_URL,
+    contractInterface: REGISTRY_ABI,
+    functionName: 'addDeployment',
+    args: [address, deployedContractAddress]
+  });
+
+  const { write: contractWrite} = useContractWrite(contractConfig);
 
   // Write + Read hooks for fund withdraw (if present, validate before performing transaction)
 
   // Reads hook for displaying the payment stats inside a infinite scroll modal (if contract exists)
+  const { config: paymentHistory } = usePrepareContractWrite({
+    addressOrName: deployedContractAddress!,
+    contractInterface: FUND_ABI,
+    functionName: 'paymentsHistory'
+  });
+  const { config: totalPayment } = usePrepareContractWrite({
+    addressOrName: deployedContractAddress!,
+    contractInterface: FUND_ABI,
+    functionName: 'totalPaymentReceived'
+  });
 
-  // Contract deployment -- Would be better with react query (imo)?
-  const deploy = useDeployContract([
-    '', // Payment receiver, can be address zero
-    '', // Currency to receive payment in
-    WMATIC_ADDRESS,
-    SWAP_ROUTER_ADDRESS
-  ]);
+  const deploy = useDeployContract();
+  const deployMutation = useMutation(deploy, {
+    onSuccess: (data) => {
+      setDeployedContractAddress(data);
+    }
+  });
 
   // Other hooks
-  const retrievedData = useIPFSRetrieve(settingsData as unknown as string);
+  const { data: retrievedData } = useIPFSRetrieve(
+    settingsData as unknown as string
+  );
 
-  // BUG: The first is undefined, hence undefined. We get the data in few attempts. Fix it?
   const [username, setUsername] = useState<string | undefined>(
     retrievedData?.name
   );
   const [bio, setBio] = useState<string | undefined>(
     retrievedData?.description
   );
-
-  const [token, setToken] = useState<string>();
-  const [receiverAddress, setReceiverAddress] = useState<string>();
 
   const prevUsername = usePrevious(username);
   const prevBio = usePrevious(bio);
@@ -82,8 +111,8 @@ const SettingsPage = () => {
     !username || !bio || !settingsData ? 'create' : 'update';
   const contractModifyType =
     !contractData || (contractData as unknown as string) == ZERO_ADDRESS
-      ? 'create'
-      : 'update';
+      ? 'deploy'
+      : 're-deploy';
 
   useEffect(() => {
     if (!isConnected) {
@@ -93,6 +122,11 @@ const SettingsPage = () => {
 
   const uploadToIPFS = async () => {
     const uploader = useIPFSUpload();
+
+    if (prevUsername === username && prevBio === bio) {
+      return;
+    }
+
     const { url } = await uploader({
       name: username || '',
       description: bio || ''
@@ -118,6 +152,7 @@ const SettingsPage = () => {
             type="text"
             placeholder="Username"
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
+            required={true}
           />
           <input
             value={bio}
@@ -125,6 +160,7 @@ const SettingsPage = () => {
             type="text"
             placeholder="Bio"
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
+            required={true}
           />
           <input
             value={receiverAddress}
@@ -132,6 +168,7 @@ const SettingsPage = () => {
             type="text"
             placeholder="Receiver Address"
             className="block text-sm py-3 px-4 rounded-lg w-full border outline-none"
+            required={true}
           />
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn m-1 btn-primary">
@@ -141,34 +178,21 @@ const SettingsPage = () => {
               tabIndex={0}
               className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
             >
-              <li>
-                <a
-                  onClick={() => {
-                    setToken('Matic');
-                  }}
-                >
-                  Matic
-                </a>
-              </li>
-              <li>
-                <a
-                  onClick={() => {
-                    setToken('USDC');
-                  }}
-                >
-                  USDC
-                </a>
-              </li>
-              <li
-                onClick={() => {
-                  setToken('Matic');
-                }}
-              >
-                <a>Matic</a>
-              </li>
+              {allCurrencies.map(currency => (
+                <li key={currency.name}>
+                  <a
+                    onClick={() => {
+                      setToken(currency.address);
+                      setTokenName(currency.name);
+                    }}
+                  >
+                    {currency.name}
+                  </a>
+                </li>
+              ))}
             </ul>
             <div className="block text-sm py-3 px-4  w-full outline-none">
-              {token || 'Set Token'}
+              {tokenName || 'Set Token'}
             </div>
           </div>
         </div>
@@ -176,17 +200,34 @@ const SettingsPage = () => {
           <button
             onClick={() => {
               console.log(username, bio);
-              console.log(REGISTRY_URL);
 
               uploadToIPFS();
               console.log(ipfsURI);
-              console.log(data);
 
               settingsWrite?.();
             }}
             className="py-3 w-64 text-xl text-white bg-purple-400 rounded-2xl"
           >
             {settingsModifyType} settings
+          </button>
+        </div>
+        <div className="text-center mt-6">
+          <button
+            onClick={() => {
+              const receiver = receiverAddress || ZERO_ADDRESS;
+
+              deployMutation.mutate([
+                receiver, // Payment receiver, can be address zero
+                token, // Currency to receive payment in
+                WMATIC_ADDRESS,
+                SWAP_ROUTER_ADDRESS
+              ]);
+
+              contractWrite?.();
+            }}
+            className="py-3 w-64 text-xl text-white bg-purple-400 rounded-2xl"
+          >
+            {contractModifyType} contract
           </button>
         </div>
       </div>

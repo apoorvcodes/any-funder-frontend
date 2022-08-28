@@ -10,6 +10,7 @@
     "format": "prettier --write \"./**/*.{ts,tsx,json,md}\""
   },
   "dependencies": {
+    "@tanstack/react-query": "^4.2.3",
     "axios": "^0.27.2",
     "daisyui": "^2.24.0",
     "ethers": "^5.7.0",
